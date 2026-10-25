@@ -1,0 +1,35 @@
+/* 공통 */
+.hidden {
+    display: none;
+}
+
+#target-label {
+    -unity-font-style: bold;
+    margin: 4px 4px 6px 4px;
+}
+
+/* Position / Rotation / Scale 행 */
+.transform-row {
+    flex-direction: row;
+    align-items: center;
+    margin: 1px 4px;
+}
+
+.transform-row__label {
+    width: 60px;
+    flex-shrink: 0;
+}
+
+.axis-field {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 40px;
+    margin-left: 2px;
+}
+
+.axis-field .unity-base-field__label {
+    min-width: 12px;
+    width: 12px;
+    padding-left: 0;
+    padding-right: 2px;
+}

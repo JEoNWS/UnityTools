@@ -1,0 +1,17 @@
+{
+  "name": "com.jeonlib.table-editor",
+  "version": "1.0.0",
+  "displayName": "Table-Editor",
+  "description": "TSV 테이블 txt를 에디터에서 보고 기존 값을 수정하는 창입니다. 브리지로 프로젝트의 암호화와 플레이 중 런타임 적용을 연결하고, 엑셀에 붙여넣기 쉬운 형식으로 복사합니다.",
+  "unity": "6000.0",
+  "keywords": [
+    "table",
+    "tsv",
+    "editor",
+    "tool",
+    "tuning"
+  ],
+  "author": {
+    "name": "JeonLib"
+  }
+}

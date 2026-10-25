@@ -1,0 +1,111 @@
+/* 공통 */
+.hidden {
+    display: none;
+}
+
+/* 툴바 */
+.toolbar-toggle--on {
+    background-color: rgba(102, 204, 255, 0.35);
+}
+
+#search-field {
+    min-width: 100px;
+    max-width: 260px;
+    flex-shrink: 1;
+}
+
+/* 설정 패널 */
+#settings-panel {
+    margin: 4px;
+    padding: 6px;
+    border-width: 1px;
+    border-radius: 3px;
+    border-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+#start-scene-hint {
+    margin-left: 4px;
+    font-size: 10px;
+    color: rgb(140, 140, 140);
+}
+
+.warning-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.warning-row > HelpBox {
+    flex-grow: 1;
+}
+
+.section-title {
+    margin-top: 6px;
+    -unity-font-style: bold;
+}
+
+.folder-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.folder-row > Label {
+    flex-grow: 1;
+}
+
+.folder-row > Button {
+    width: 22px;
+}
+
+/* 씬 목록 */
+#scene-list {
+    flex-grow: 1;
+}
+
+.scene-row {
+    flex-direction: row;
+    align-items: center;
+    height: 20px;
+    padding-left: 4px;
+    border-radius: 2px;
+}
+
+.scene-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.scene-row--loaded {
+    background-color: rgba(61, 122, 230, 0.1);
+}
+
+/* :hover보다 뒤에 두고 같이 지정해야 마우스를 올려도 활성 색이 유지된다. */
+.scene-row--active,
+.scene-row--active:hover {
+    background-color: rgba(61, 122, 230, 0.25);
+}
+
+.scene-row--active > .scene-row__label {
+    -unity-font-style: bold;
+}
+
+.scene-row__icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    flex-shrink: 0;
+}
+
+.scene-row__label {
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#footer {
+    padding: 2px;
+    font-size: 10px;
+    color: rgb(128, 128, 128);
+    -unity-text-align: middle-center;
+}

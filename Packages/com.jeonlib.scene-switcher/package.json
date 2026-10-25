@@ -1,0 +1,17 @@
+{
+  "name": "com.jeonlib.scene-switcher",
+  "version": "1.0.0",
+  "displayName": "Scene-Switcher",
+  "description": "지정한 폴더의 씬 목록을 보여 주고 클릭 한 번으로 에디터 씬을 전환하는 창입니다. 시작 씬부터 플레이, Additive 열기와 닫기, Hierarchy로 드래그를 지원합니다.",
+  "unity": "6000.0",
+  "keywords": [
+    "scene",
+    "editor",
+    "tool",
+    "switcher",
+    "ui-toolkit"
+  ],
+  "author": {
+    "name": "JeonLib"
+  }
+}

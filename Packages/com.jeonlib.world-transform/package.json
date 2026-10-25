@@ -1,0 +1,17 @@
+{
+  "name": "com.jeonlib.world-transform",
+  "version": "1.0.0",
+  "displayName": "World-Transform",
+  "description": "선택한 오브젝트의 월드 기준 Position, Rotation, Scale을 보여 주고 수정하는 창입니다. 여러 오브젝트 일괄 편집과 Undo를 지원합니다.",
+  "unity": "6000.0",
+  "keywords": [
+    "transform",
+    "world",
+    "editor",
+    "tool",
+    "ui-toolkit"
+  ],
+  "author": {
+    "name": "JeonLib"
+  }
+}
