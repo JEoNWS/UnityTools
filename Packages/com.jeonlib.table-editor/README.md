@@ -58,13 +58,13 @@ internal class MyTableBridge : ITableEditorBridge
 Package Manager에서 **+ > Install package from git URL...** 을 누르고 아래 주소를 입력합니다.
 
 ```
-https://github.com/JEoNWS/UnityTool.git?path=/Packages/com.jeonlib.table-editor#table-editor/v1.0.0
+https://github.com/JEoNWS/UnityTools.git?path=/Packages/com.jeonlib.table-editor#table-editor/v1.0.0
 ```
 
 또는 `Packages/manifest.json`의 `dependencies`에 직접 추가합니다.
 
 ```json
-"com.jeonlib.table-editor": "https://github.com/JEoNWS/UnityTool.git?path=/Packages/com.jeonlib.table-editor#table-editor/v1.0.0"
+"com.jeonlib.table-editor": "https://github.com/JEoNWS/UnityTools.git?path=/Packages/com.jeonlib.table-editor#table-editor/v1.0.0"
 ```
 
 `#` 뒤의 태그를 빼면 기본 브랜치의 최신 코드가 설치됩니다.

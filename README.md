@@ -15,13 +15,13 @@ JeonLib Unity 에디터 도구 모음입니다. 도구마다 독립된 UPM 패�
 Package Manager에서 **+ > Install package from git URL...** 을 누르고 아래 형식의 주소를 입력합니다.
 
 ```
-https://github.com/JEoNWS/UnityTool.git?path=/Packages/<패키지 이름>#<도구>/v<버전>
+https://github.com/JEoNWS/UnityTools.git?path=/Packages/<패키지 이름>#<도구>/v<버전>
 ```
 
 예: Scene-Switcher 1.0.0
 
 ```
-https://github.com/JEoNWS/UnityTool.git?path=/Packages/com.jeonlib.scene-switcher#scene-switcher/v1.0.0
+https://github.com/JEoNWS/UnityTools.git?path=/Packages/com.jeonlib.scene-switcher#scene-switcher/v1.0.0
 ```
 
 자세한 사용법은 각 패키지 폴더의 README를 참고하세요.
