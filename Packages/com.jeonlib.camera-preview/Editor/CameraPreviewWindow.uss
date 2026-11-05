@@ -1,0 +1,30 @@
+/* 공통 */
+.hidden {
+    display: none;
+}
+
+/* 툴바 */
+#target-label {
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    margin-left: 6px;
+}
+
+#aspect-field {
+    width: 80px;
+    margin: 0 2px;
+}
+
+/* 미리보기 */
+#preview-area {
+    flex-grow: 1;
+    background-color: rgb(0, 0, 0);
+}
+
+#preview-drawer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
