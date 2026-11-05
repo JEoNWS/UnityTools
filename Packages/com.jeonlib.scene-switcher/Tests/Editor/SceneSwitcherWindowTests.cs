@@ -66,10 +66,12 @@ namespace JeonLib.SceneSwitcher.Tests
         }
 
         /// <summary>설정을 준비한 뒤 새 창을 띄운다. 사용자가 도킹해 둔 창은 건드리지 않는다.</summary>
-        private IEnumerator openWindow(bool registerFolder = true)
+        private IEnumerator openWindow(bool registerFolder = true, params string[] singleScenePaths)
         {
             if (registerFolder)
                 SceneSwitcherSettings.instance.addSceneFolder(AssetDatabase.AssetPathToGUID(TEMP_FOLDER));
+            foreach (string scenePath in singleScenePaths)
+                SceneSwitcherSettings.instance.addScene(AssetDatabase.AssetPathToGUID(scenePath));
 
             m_window = EditorWindow.CreateWindow<SceneSwitcherWindow>();
             yield return waitFrames();
@@ -82,6 +84,14 @@ namespace JeonLib.SceneSwitcher.Tests
         }
 
         private VisualElement row(string scenePath) => root.Q(SceneSwitcherUI.rowName(scenePath));
+
+        private VisualElement singleGroup => root.Q(SceneSwitcherUI.SINGLE_SCENE_GROUP);
+
+        private VisualElement singleRow(string scenePath) => singleGroup?.Q(SceneSwitcherUI.rowName(scenePath));
+
+        private VisualElement folderRow(string scenePath) => root.Q(SceneSwitcherUI.groupName(TEMP_FOLDER))?.Q(SceneSwitcherUI.rowName(scenePath));
+
+        private static string sceneGuid(string scenePath) => AssetDatabase.AssetPathToGUID(scenePath);
 
         private static bool isShown(VisualElement element)
         {
@@ -130,11 +140,16 @@ namespace JeonLib.SceneSwitcher.Tests
 
         /// <summary>Project 창에서 폴더를 끌어와 창에 놓은 것처럼 보낸다.</summary>
         /// <remarks>요소에 직접 보낸 드래그 이벤트는 UI Toolkit이 걸러서, 창에 IMGUI 이벤트로 보내 일반 입력 경로를 탄다.</remarks>
-        private void dropFolder(string folderPath)
+        private void dropFolder(string folderPath) => dropAsset<DefaultAsset>(folderPath);
+
+        /// <summary>Project 창에서 씬 에셋을 끌어와 창에 놓은 것처럼 보낸다.</summary>
+        private void dropScene(string scenePath) => dropAsset<SceneAsset>(scenePath);
+
+        private void dropAsset<T>(string assetPath) where T : Object
         {
             DragAndDrop.PrepareStartDrag();
-            DragAndDrop.paths = new[] { folderPath };
-            DragAndDrop.objectReferences = new Object[] { AssetDatabase.LoadAssetAtPath<DefaultAsset>(folderPath) };
+            DragAndDrop.paths = new[] { assetPath };
+            DragAndDrop.objectReferences = new Object[] { AssetDatabase.LoadAssetAtPath<T>(assetPath) };
 
             Vector2 center = root.worldBound.center;
             m_window.SendEvent(new Event { type = EventType.DragUpdated, mousePosition = center });
@@ -363,6 +378,136 @@ namespace JeonLib.SceneSwitcher.Tests
 
             Assert.That(PlayFromStartScene.customStartScene, Is.EqualTo(AssetDatabase.LoadAssetAtPath<SceneAsset>(SCENE_PATH_B)));
             Assert.That(row(SCENE_PATH_B).Q<Label>().text, Does.Contain("[Start]"));
+        }
+
+        // ---- 개별 씬 ----
+
+        [UnityTest]
+        public IEnumerator 개별_씬이_없으면_개별_그룹이_안_보임()
+        {
+            yield return openWindow();
+
+            Assert.That(isShown(singleGroup), Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator 개별_씬은_맨_위_그룹에_씬_이름으로_보임()
+        {
+            yield return openWindow(true, SCENE_PATH_B);
+
+            var sceneList = root.Q(SceneSwitcherUI.SCENE_LIST);
+            Assert.That(isShown(singleGroup), Is.True);
+            Assert.That(sceneList.Q<Foldout>(), Is.SameAs(singleGroup));
+            Assert.That(((Foldout)singleGroup).text, Does.StartWith("개별 씬"));
+            Assert.That(singleRow(SCENE_PATH_B).Q<Label>().text, Is.EqualTo("Bravo"));
+            Assert.That(singleRow(SCENE_PATH_A), Is.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator 개별_씬만_있어도_안내와_설정_패널이_숨겨짐()
+        {
+            yield return openWindow(false, SCENE_PATH_A);
+
+            Assert.That(isShown(root.Q(SceneSwitcherUI.EMPTY_HELP)), Is.False);
+            Assert.That(isShown(root.Q(SceneSwitcherUI.SETTINGS_PANEL)), Is.False);
+            Assert.That(singleRow(SCENE_PATH_A), Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator 폴더_안의_씬을_개별로_등록하면_양쪽에_보임()
+        {
+            yield return openWindow(true, SCENE_PATH_A);
+
+            Assert.That(singleRow(SCENE_PATH_A), Is.Not.Null);
+            Assert.That(folderRow(SCENE_PATH_A), Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator 검색은_양쪽_행에_모두_적용됨()
+        {
+            yield return openWindow(true, SCENE_PATH_A);
+
+            root.Q<ToolbarSearchField>(SceneSwitcherUI.SEARCH_FIELD).value = "brav";
+            yield return waitFrames();
+
+            Assert.That(isShown(singleRow(SCENE_PATH_A)), Is.False);
+            Assert.That(isShown(folderRow(SCENE_PATH_A)), Is.False);
+            Assert.That(isShown(folderRow(SCENE_PATH_B)), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator 개별_행을_클릭하면_전환되고_양쪽_행에_활성_표시()
+        {
+            yield return openWindow(true, SCENE_PATH_A);
+
+            click(singleRow(SCENE_PATH_A));
+            yield return waitFrames();
+
+            Assert.That(SceneManager.GetActiveScene().path, Is.EqualTo(SCENE_PATH_A));
+            Assert.That(singleRow(SCENE_PATH_A).ClassListContains(SceneSwitcherUI.ACTIVE_CLASS), Is.True);
+            Assert.That(folderRow(SCENE_PATH_A).ClassListContains(SceneSwitcherUI.ACTIVE_CLASS), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator 씬을_창에_놓으면_개별_씬으로_등록됨()
+        {
+            yield return openWindow(registerFolder: false);
+
+            dropScene(SCENE_PATH_A);
+            yield return waitFrames();
+
+            Assert.That(SceneSwitcherSettings.instance.sceneGuids, Is.EqualTo(new[] { sceneGuid(SCENE_PATH_A) }));
+            Assert.That(SceneSwitcherSettings.instance.sceneFolderGuids, Is.Empty);
+            Assert.That(singleRow(SCENE_PATH_A), Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator 씬_추가_입력칸으로_등록하고_입력칸은_비움()
+        {
+            yield return openWindow(registerFolder: false);
+            var field = root.Q<ObjectField>(SceneSwitcherUI.ADD_SCENE_FIELD);
+
+            field.value = AssetDatabase.LoadAssetAtPath<SceneAsset>(SCENE_PATH_B);
+            yield return waitFrames();
+
+            Assert.That(SceneSwitcherSettings.instance.sceneGuids, Is.EqualTo(new[] { sceneGuid(SCENE_PATH_B) }));
+            Assert.That(field.value, Is.Null);
+            Assert.That(singleRow(SCENE_PATH_B), Is.Not.Null);
+        }
+
+        [UnityTest]
+        public IEnumerator 설정의_개별_씬_목록에서_삭제()
+        {
+            yield return openWindow(true, SCENE_PATH_A);
+            root.Q<ToolbarToggle>(SceneSwitcherUI.SETTINGS_TOGGLE).value = true;
+            yield return waitFrames();
+
+            var list = root.Q(SceneSwitcherUI.SINGLE_SCENE_LIST);
+            Assert.That(list.Q<Label>().text, Is.EqualTo(SCENE_PATH_A));
+
+            click(list.Q<Button>());
+            yield return waitFrames();
+
+            Assert.That(SceneSwitcherSettings.instance.sceneGuids, Is.Empty);
+            Assert.That(isShown(singleGroup), Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator 메뉴로_개별_씬을_등록하고_뺄_수_있음()
+        {
+            yield return openWindow();
+
+            menuAction(SCENE_PATH_A, SceneSwitcherUI.MENU_ADD_SINGLE_SCENE).Execute();
+            yield return waitFrames();
+
+            Assert.That(SceneSwitcherSettings.instance.sceneGuids, Is.EqualTo(new[] { sceneGuid(SCENE_PATH_A) }));
+            Assert.That(singleRow(SCENE_PATH_A), Is.Not.Null);
+
+            menuAction(SCENE_PATH_A, SceneSwitcherUI.MENU_REMOVE_SINGLE_SCENE).Execute();
+            yield return waitFrames();
+
+            Assert.That(SceneSwitcherSettings.instance.sceneGuids, Is.Empty);
+            Assert.That(isShown(singleGroup), Is.False);
         }
     }
 }

@@ -14,8 +14,11 @@ namespace JeonLib.SceneSwitcher
         public const string START_SCENE_HINT = "start-scene-hint";
         public const string FOLDER_LIST = "folder-list";
         public const string ADD_FOLDER_FIELD = "add-folder-field";
+        public const string SINGLE_SCENE_LIST = "single-scene-list";
+        public const string ADD_SCENE_FIELD = "add-scene-field";
 
         public const string SCENE_LIST = "scene-list";
+        public const string SINGLE_SCENE_GROUP = "single-scene-group";
         public const string EMPTY_HELP = "empty-help";
         public const string FOOTER = "footer";
 
@@ -34,6 +37,8 @@ namespace JeonLib.SceneSwitcher
         public const string MENU_SET_START_SCENE = "시작 씬으로 지정";
         public const string MENU_CLEAR_START_SCENE = "시작 씬 지정 해제";
         public const string MENU_PING = "Project에서 보기";
+        public const string MENU_ADD_SINGLE_SCENE = "개별 씬으로 등록";
+        public const string MENU_REMOVE_SINGLE_SCENE = "개별 씬에서 빼기";
 
         public static string groupName(string folderPath) => "group:" + folderPath;
         public static string rowName(string scenePath) => "scene:" + scenePath;

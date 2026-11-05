@@ -12,6 +12,7 @@ namespace JeonLib.SceneSwitcher
         internal const string FILE_PATH = "UserSettings/SceneSwitcher.json";
 
         [SerializeField] private List<string> m_sceneFolderGuids = new List<string>();
+        [SerializeField] private List<string> m_sceneGuids = new List<string>();
         [SerializeField] private bool m_playFromStartScene;
         [SerializeField] private string m_startSceneGuid = "";
 
@@ -37,6 +38,9 @@ namespace JeonLib.SceneSwitcher
         }
 
         public IReadOnlyList<string> sceneFolderGuids => m_sceneFolderGuids;
+
+        /// <summary>폴더와 별개로 하나씩 등록한 씬.</summary>
+        public IReadOnlyList<string> sceneGuids => m_sceneGuids;
 
         public bool playFromStartScene
         {
@@ -79,6 +83,22 @@ namespace JeonLib.SceneSwitcher
         public void removeSceneFolder(string guid)
         {
             if (m_sceneFolderGuids.Remove(guid))
+                save();
+        }
+
+        public bool addScene(string guid)
+        {
+            if (string.IsNullOrEmpty(guid) || m_sceneGuids.Contains(guid))
+                return false;
+
+            m_sceneGuids.Add(guid);
+            save();
+            return true;
+        }
+
+        public void removeScene(string guid)
+        {
+            if (m_sceneGuids.Remove(guid))
                 save();
         }
 

@@ -12,14 +12,16 @@ using static JeonLib.SceneSwitcher.SceneSwitcherUI;
 
 namespace JeonLib.SceneSwitcher
 {
-    /// <summary>지정한 폴더 아래의 씬 목록을 보여 주고 클릭하면 에디터에서 씬을 전환하는 창.</summary>
+    /// <summary>지정한 폴더 아래의 씬과 개별 등록한 씬 목록을 보여 주고 클릭하면 에디터에서 씬을 전환하는 창.</summary>
     internal class SceneSwitcherWindow : EditorWindow
     {
         private const string STYLE_SHEET_NAME = "SceneSwitcherWindow.uss";
         private const string VIEW_DATA_PREFIX = "SceneSwitcher.";
+        private const string SINGLE_SCENE_GROUP_TITLE = "개별 씬";
 
         private static SceneSwitcherSettings settings => SceneSwitcherSettings.instance;
         private static IReadOnlyList<string> sceneFolderGuids => settings.sceneFolderGuids;
+        private static IReadOnlyList<string> sceneGuids => settings.sceneGuids;
 
         // 검색어는 창 직렬화로 유지하고, 접힘·스크롤은 viewDataKey로 Unity가 저장한다.
         [SerializeField] private string m_search = "";
@@ -33,15 +35,18 @@ namespace JeonLib.SceneSwitcher
         private VisualElement m_missingStartWarning;
         private Label m_startSceneHint;
         private VisualElement m_folderList;
+        private VisualElement m_singleSceneList;
         private HelpBox m_emptyHelp;
         private ScrollView m_sceneList;
 
-        private readonly Dictionary<string, Foldout> m_foldouts = new Dictionary<string, Foldout>();
-        private readonly Dictionary<string, VisualElement> m_rows = new Dictionary<string, VisualElement>();
+        // 같은 씬이 개별 그룹과 폴더 그룹에 함께 나올 수 있어 행은 목록으로 둔다.
+        private readonly List<(Foldout foldout, string title)> m_foldouts = new List<(Foldout foldout, string title)>();
+        private readonly List<(string scenePath, VisualElement row)> m_rows = new List<(string scenePath, VisualElement row)>();
         private Texture m_sceneIcon;
 
         // refresh()에서 계산해 두는 데이터.
         private List<SceneFolderGroup> m_groups = new List<SceneFolderGroup>();
+        private List<string> m_singleScenes = new List<string>();
         private readonly HashSet<string> m_buildScenes = new HashSet<string>();
         private SceneAsset m_startScene;
         private string m_startPath = "";
@@ -113,7 +118,7 @@ namespace JeonLib.SceneSwitcher
             root.Add(buildToolbar());
             root.Add(buildSettingsPanel());
 
-            m_emptyHelp = new HelpBox("씬이 있는 폴더를 추가하세요.", HelpBoxMessageType.Info) { name = EMPTY_HELP };
+            m_emptyHelp = new HelpBox("씬이나 씬 폴더를 추가하세요.", HelpBoxMessageType.Info) { name = EMPTY_HELP };
             root.Add(m_emptyHelp);
 
             m_sceneList = new ScrollView { name = SCENE_LIST, viewDataKey = VIEW_DATA_PREFIX + SCENE_LIST };
@@ -121,7 +126,7 @@ namespace JeonLib.SceneSwitcher
 
             root.Add(new Label("클릭: 전환 | Ctrl+클릭: 추가로 열기 | 드래그: Hierarchy에 추가 | 우클릭: 메뉴") { name = FOOTER });
 
-            registerFolderDrop(root);
+            registerAssetDrop(root);
             refresh();
         }
 
@@ -206,36 +211,67 @@ namespace JeonLib.SceneSwitcher
                 addSceneFolder(AssetDatabase.GetAssetPath(evt.newValue));
             });
 
+            var sceneTitle = new Label("개별 씬 (Project 창에서 씬을 끌어다 놓아도 됩니다)");
+            sceneTitle.AddToClassList("section-title");
+
+            m_singleSceneList = new VisualElement { name = SINGLE_SCENE_LIST };
+
+            var addSceneField = new ObjectField("씬 추가")
+            {
+                name = ADD_SCENE_FIELD,
+                objectType = typeof(SceneAsset),
+                allowSceneObjects = false,
+            };
+            addSceneField.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue == null)
+                    return;
+
+                addSceneField.SetValueWithoutNotify(null);
+                addSingleScene(AssetDatabase.GetAssetPath(evt.newValue));
+            });
+
             m_settingsPanel.Add(m_startSceneField);
             m_settingsPanel.Add(m_missingStartWarning);
             m_settingsPanel.Add(m_startSceneHint);
             m_settingsPanel.Add(folderTitle);
             m_settingsPanel.Add(m_folderList);
             m_settingsPanel.Add(addFolderField);
+            m_settingsPanel.Add(sceneTitle);
+            m_settingsPanel.Add(m_singleSceneList);
+            m_settingsPanel.Add(addSceneField);
             return m_settingsPanel;
         }
 
-        private void registerFolderDrop(VisualElement target)
+        /// <summary>폴더를 놓으면 씬 폴더로, 씬을 놓으면 개별 씬으로 등록한다.</summary>
+        private void registerAssetDrop(VisualElement target)
         {
             target.RegisterCallback<DragUpdatedEvent>(_ =>
             {
-                if (0 < draggedFolders().Length)
+                if (0 < draggedFolders().Length || 0 < draggedScenes().Length)
                     DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
             });
 
             target.RegisterCallback<DragPerformEvent>(_ =>
             {
                 string[] folders = draggedFolders();
-                if (folders.Length == 0)
+                string[] scenes = draggedScenes();
+                if (folders.Length == 0 && scenes.Length == 0)
                     return;
 
                 DragAndDrop.AcceptDrag();
                 foreach (string folder in folders)
                     addSceneFolder(folder);
+                foreach (string scene in scenes)
+                    addSingleScene(scene);
             });
         }
 
         private static string[] draggedFolders() => DragAndDrop.paths.Where(AssetDatabase.IsValidFolder).ToArray();
+
+        private static string[] draggedScenes() => DragAndDrop.paths.Where(isScenePath).ToArray();
+
+        private static bool isScenePath(string path) => AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(SceneAsset);
 
         // ---------------------------------------------------------------- 씬 행
 
@@ -342,6 +378,11 @@ namespace JeonLib.SceneSwitcher
                 menu.AppendAction(MENU_CLEAR_START_SCENE, _ => PlayFromStartScene.customStartScene = null);
             else
                 menu.AppendAction(MENU_SET_START_SCENE, _ => PlayFromStartScene.customStartScene = sceneAsset);
+            string guid = AssetDatabase.AssetPathToGUID(scenePath);
+            if (sceneGuids.Contains(guid))
+                menu.AppendAction(MENU_REMOVE_SINGLE_SCENE, _ => removeSingleScene(guid));
+            else
+                menu.AppendAction(MENU_ADD_SINGLE_SCENE, _ => addSingleScene(scenePath));
             menu.AppendAction(MENU_PING, _ => EditorGUIUtility.PingObject(sceneAsset));
         }
 
@@ -416,6 +457,26 @@ namespace JeonLib.SceneSwitcher
             refresh();
         }
 
+        /// <summary>폴더에 포함된 씬이어도 개별 그룹에 따로 보이도록 등록한다.</summary>
+        private void addSingleScene(string scenePath)
+        {
+            if (!isScenePath(scenePath))
+                return;
+
+            if (!settings.addScene(AssetDatabase.AssetPathToGUID(scenePath)))
+            {
+                ShowNotification(new GUIContent("이미 등록된 씬입니다."));
+                return;
+            }
+            refresh();
+        }
+
+        private void removeSingleScene(string guid)
+        {
+            settings.removeScene(guid);
+            refresh();
+        }
+
         private void onRefreshClicked()
         {
             SceneSwitcherSettings.reload();
@@ -434,6 +495,11 @@ namespace JeonLib.SceneSwitcher
                 .Select(p => AssetDatabase.IsValidFolder(p) ? p : null);
             m_groups = SceneSwitcherLogic.buildGroups(folderPaths, findScenes);
 
+            // 삭제된 씬도 빈 경로로 넘겨 건너뛰게 한다.
+            m_singleScenes = SceneSwitcherLogic.buildSceneGroup(sceneGuids
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Select(p => isScenePath(p) ? p : null));
+
             m_buildScenes.Clear();
             m_buildScenes.UnionWith(EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path));
 
@@ -448,6 +514,7 @@ namespace JeonLib.SceneSwitcher
             updatePlayToggle();
             updateStartSceneSettings();
             rebuildFolderList();
+            rebuildSingleSceneList();
             rebuildSceneList();
             updateSettingsVisibility();
             updateRowStates();
@@ -490,51 +557,76 @@ namespace JeonLib.SceneSwitcher
             }
         }
 
+        private void rebuildSingleSceneList()
+        {
+            m_singleSceneList.Clear();
+            foreach (string guid in sceneGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var row = new VisualElement();
+                row.AddToClassList("folder-row");
+                row.Add(new Label(isScenePath(path) ? path : "(삭제된 씬)"));
+                row.Add(new Button(() => removeSingleScene(guid)) { text = "-" });
+                m_singleSceneList.Add(row);
+            }
+        }
+
         private void rebuildSceneList()
         {
             m_sceneList.Clear();
             m_foldouts.Clear();
             m_rows.Clear();
 
+            if (0 < m_singleScenes.Count)
+            {
+                Foldout single = addFoldout(SINGLE_SCENE_GROUP, SINGLE_SCENE_GROUP_TITLE, SINGLE_SCENE_GROUP);
+                foreach (string scenePath in m_singleScenes)
+                    addRow(single, scenePath, Path.GetDirectoryName(scenePath).Replace('\\', '/'));
+            }
+
             foreach (SceneFolderGroup group in m_groups)
             {
-                // viewDataKey가 있으면 접힘 상태를 Unity가 저장하고 복원한다.
-                var foldout = new Foldout { name = groupName(group.folderPath), viewDataKey = VIEW_DATA_PREFIX + group.folderPath };
+                Foldout foldout = addFoldout(groupName(group.folderPath), group.folderPath, group.folderPath);
                 foreach (string scenePath in group.scenePaths)
-                {
-                    VisualElement row = createRow(scenePath, group.folderPath);
-                    foldout.Add(row);
-                    m_rows[scenePath] = row;
-                }
-
-                m_sceneList.Add(foldout);
-                m_foldouts[group.folderPath] = foldout;
+                    addRow(foldout, scenePath, group.folderPath);
             }
             applySearch();
+        }
+
+        private Foldout addFoldout(string name, string title, string viewDataId)
+        {
+            // viewDataKey가 있으면 접힘 상태를 Unity가 저장하고 복원한다.
+            var foldout = new Foldout { name = name, viewDataKey = VIEW_DATA_PREFIX + viewDataId };
+            m_sceneList.Add(foldout);
+            m_foldouts.Add((foldout, title));
+            return foldout;
+        }
+
+        private void addRow(Foldout foldout, string scenePath, string labelBasePath)
+        {
+            VisualElement row = createRow(scenePath, labelBasePath);
+            foldout.Add(row);
+            m_rows.Add((scenePath, row));
         }
 
         /// <summary>목록을 다시 만들지 않고 클래스만 바꿔 검색 결과를 보여 준다.</summary>
         private void applySearch()
         {
-            foreach (SceneFolderGroup group in m_groups)
+            foreach ((string scenePath, VisualElement row) in m_rows)
+                row.EnableInClassList(HIDDEN_CLASS, !matchesSearch(scenePath));
+
+            foreach ((Foldout foldout, string title) in m_foldouts)
             {
-                int shown = 0;
-                foreach (string scenePath in group.scenePaths)
-                {
-                    bool match = matchesSearch(scenePath);
-                    m_rows[scenePath].EnableInClassList(HIDDEN_CLASS, !match);
-                    if (match)
-                        ++shown;
-                }
-                m_foldouts[group.folderPath].text = $"{group.folderPath} ({shown})";
+                int shown = foldout.Query(className: ROW_CLASS).Where(r => !r.ClassListContains(HIDDEN_CLASS)).ToList().Count;
+                foldout.text = $"{title} ({shown})";
             }
         }
 
         private void updateSettingsVisibility()
         {
-            bool hasFolders = 0 < sceneFolderGuids.Count;
-            m_settingsPanel.EnableInClassList(HIDDEN_CLASS, hasFolders && !m_settingsToggle.value);
-            m_emptyHelp.EnableInClassList(HIDDEN_CLASS, hasFolders);
+            bool hasEntries = 0 < sceneFolderGuids.Count || 0 < sceneGuids.Count;
+            m_settingsPanel.EnableInClassList(HIDDEN_CLASS, hasEntries && !m_settingsToggle.value);
+            m_emptyHelp.EnableInClassList(HIDDEN_CLASS, hasEntries);
         }
 
         private void updateRowStates()
@@ -548,11 +640,11 @@ namespace JeonLib.SceneSwitcher
             }
             m_activePath = SceneManager.GetActiveScene().path;
 
-            foreach (KeyValuePair<string, VisualElement> pair in m_rows)
+            foreach ((string scenePath, VisualElement row) in m_rows)
             {
-                bool isActive = pair.Key == m_activePath;
-                pair.Value.EnableInClassList(ACTIVE_CLASS, isActive);
-                pair.Value.EnableInClassList(LOADED_CLASS, !isActive && m_loadedScenes.Contains(pair.Key));
+                bool isActive = scenePath == m_activePath;
+                row.EnableInClassList(ACTIVE_CLASS, isActive);
+                row.EnableInClassList(LOADED_CLASS, !isActive && m_loadedScenes.Contains(scenePath));
             }
         }
 

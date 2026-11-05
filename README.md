@@ -6,7 +6,7 @@ JeonLib Unity 에디터 도구 모음입니다. 도구마다 독립된 UPM 패�
 
 | 패키지 | 설명 | 최신 버전 |
 |---|---|---|
-| [Scene-Switcher](Packages/com.jeonlib.scene-switcher) | 지정한 폴더의 씬 목록에서 클릭 한 번으로 에디터 씬 전환, 시작 씬부터 플레이 | 1.0.0 |
+| [Scene-Switcher](Packages/com.jeonlib.scene-switcher) | 지정한 폴더와 개별 등록한 씬 목록에서 클릭 한 번으로 에디터 씬 전환, 시작 씬부터 플레이 | 1.1.0 |
 | [World-Transform](Packages/com.jeonlib.world-transform) | 선택한 오브젝트의 월드 기준 Position, Rotation, Scale 표시와 수정, 다중 선택 일괄 편집 | 1.0.0 |
 | [Table-Editor](Packages/com.jeonlib.table-editor) | TSV 테이블 txt의 기존 값 수정, 엑셀용 복사, 브리지로 암호화와 플레이 중 런타임 적용 연결 | 1.0.0 |
 

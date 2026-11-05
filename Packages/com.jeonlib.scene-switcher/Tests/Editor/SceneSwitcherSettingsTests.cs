@@ -31,6 +31,7 @@ namespace JeonLib.SceneSwitcher.Tests
         public void 파일이_없으면_기본값()
         {
             Assert.That(settings.sceneFolderGuids, Is.Empty);
+            Assert.That(settings.sceneGuids, Is.Empty);
             Assert.That(settings.playFromStartScene, Is.False);
             Assert.That(settings.startSceneGuid, Is.Empty);
         }
@@ -74,6 +75,71 @@ namespace JeonLib.SceneSwitcher.Tests
             settings.removeSceneFolder(GUID_A);
 
             Assert.That(File.Exists(SceneSwitcherSettings.FILE_PATH), Is.False);
+        }
+
+        [Test]
+        public void 개별_씬_추가는_다시_읽어도_유지()
+        {
+            Assert.That(settings.addScene(GUID_A), Is.True);
+
+            SceneSwitcherSettings.reload();
+
+            Assert.That(settings.sceneGuids, Is.EqualTo(new[] { GUID_A }));
+        }
+
+        [Test]
+        public void 개별_씬도_중복이나_빈_GUID는_추가되지_않음()
+        {
+            settings.addScene(GUID_A);
+
+            Assert.That(settings.addScene(GUID_A), Is.False);
+            Assert.That(settings.addScene(""), Is.False);
+            Assert.That(settings.addScene(null), Is.False);
+            Assert.That(settings.sceneGuids.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void 개별_씬_삭제는_다시_읽어도_유지()
+        {
+            settings.addScene(GUID_A);
+            settings.addScene(GUID_B);
+
+            settings.removeScene(GUID_A);
+            SceneSwitcherSettings.reload();
+
+            Assert.That(settings.sceneGuids, Is.EqualTo(new[] { GUID_B }));
+        }
+
+        [Test]
+        public void 없는_개별_씬을_지우면_파일을_쓰지_않음()
+        {
+            settings.removeScene(GUID_A);
+
+            Assert.That(File.Exists(SceneSwitcherSettings.FILE_PATH), Is.False);
+        }
+
+        [Test]
+        public void 개별_씬과_폴더는_서로_따로_관리()
+        {
+            settings.addSceneFolder(GUID_A);
+
+            Assert.That(settings.addScene(GUID_A), Is.True);
+            settings.removeScene(GUID_A);
+
+            Assert.That(settings.sceneFolderGuids, Is.EqualTo(new[] { GUID_A }));
+            Assert.That(settings.sceneGuids, Is.Empty);
+        }
+
+        [Test]
+        public void 개별_씬_필드가_없는_예전_파일도_읽힘()
+        {
+            File.WriteAllText(SceneSwitcherSettings.FILE_PATH,
+                $"{{\"m_sceneFolderGuids\":[\"{GUID_A}\"],\"m_playFromStartScene\":false,\"m_startSceneGuid\":\"\"}}");
+
+            SceneSwitcherSettings.reload();
+
+            Assert.That(settings.sceneFolderGuids, Is.EqualTo(new[] { GUID_A }));
+            Assert.That(settings.sceneGuids, Is.Not.Null.And.Empty);
         }
 
         [Test]

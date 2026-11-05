@@ -53,6 +53,24 @@ namespace JeonLib.SceneSwitcher.Tests
             Assert.That(groups[0].folderPath, Is.EqualTo("Assets/S"));
         }
 
+        // ---- buildSceneGroup ----
+
+        [Test]
+        public void 개별_씬은_폴더와_상관없이_이름순_대소문자_무시_정렬()
+        {
+            var scenes = SceneSwitcherLogic.buildSceneGroup(new[] { "Assets/A/c.unity", "Assets/Z/a.unity", "Assets/M/B.unity" });
+
+            Assert.That(scenes, Is.EqualTo(new[] { "Assets/Z/a.unity", "Assets/M/B.unity", "Assets/A/c.unity" }));
+        }
+
+        [Test]
+        public void 개별_씬의_빈_경로와_중복은_건너뜀()
+        {
+            var scenes = SceneSwitcherLogic.buildSceneGroup(new[] { null, "", "Assets/S/A.unity", "Assets/S/A.unity" });
+
+            Assert.That(scenes, Is.EqualTo(new[] { "Assets/S/A.unity" }));
+        }
+
         // ---- planAddFolder ----
 
         [Test]

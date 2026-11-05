@@ -68,6 +68,16 @@ namespace JeonLib.SceneSwitcher
             return groups;
         }
 
+        /// <summary>개별 씬을 씬 이름순으로 모은다. 빈 경로와 중복은 뺀다.</summary>
+        public static List<string> buildSceneGroup(IEnumerable<string> scenePaths)
+        {
+            return scenePaths
+                .Where(p => !string.IsNullOrEmpty(p))
+                .Distinct()
+                .OrderBy(Path.GetFileNameWithoutExtension, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         /// <summary>등록된 폴더 안에 들어가면 거부하고, 등록된 하위 폴더가 있으면 합칠 대상으로 돌려준다.</summary>
         public static FolderAddPlan planAddFolder(string folderPath, IEnumerable<string> registeredFolderPaths)
         {
