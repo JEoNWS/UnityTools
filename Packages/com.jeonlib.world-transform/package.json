@@ -11,6 +11,7 @@
     "tool",
     "ui-toolkit"
   ],
+  "license": "MIT",
   "author": {
     "name": "JeonLib"
   }

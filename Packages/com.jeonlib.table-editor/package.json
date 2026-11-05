@@ -11,6 +11,7 @@
     "tool",
     "tuning"
   ],
+  "license": "MIT",
   "author": {
     "name": "JeonLib"
   }

@@ -11,6 +11,7 @@
     "switcher",
     "ui-toolkit"
   ],
+  "license": "MIT",
   "author": {
     "name": "JeonLib"
   }

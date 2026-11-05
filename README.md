@@ -42,4 +42,4 @@ Packages/
 
 ## 라이선스
 
-정해지지 않았습니다.
+[MIT](LICENSE)
