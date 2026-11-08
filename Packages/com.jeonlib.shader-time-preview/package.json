@@ -1,0 +1,19 @@
+{
+  "name": "com.jeonlib.shader-time-preview",
+  "version": "1.0.0",
+  "displayName": "Shader-Time-Preview",
+  "description": "_Time.y와 시작 시각 프로퍼티로 진행하는 셰이더 이펙트를 창 안의 미리보기에서 원하는 시점에 멈춰 보거나 재생하는 창입니다. 머티리얼 에셋은 바꾸지 않습니다.",
+  "unity": "6000.0",
+  "keywords": [
+    "shader",
+    "material",
+    "vfx",
+    "preview",
+    "editor",
+    "tool",
+    "ui-toolkit"
+  ],
+  "author": {
+    "name": "JeonLib"
+  }
+}
